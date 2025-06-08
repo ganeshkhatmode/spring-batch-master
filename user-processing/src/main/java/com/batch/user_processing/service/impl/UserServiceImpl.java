@@ -1,6 +1,6 @@
 package com.batch.user_processing.service.impl;
 
-import com.batch.user_processing.UserRepository;
+import com.batch.user_processing.repository.UserRepository;
 import com.batch.user_processing.model.User;
 import com.batch.user_processing.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

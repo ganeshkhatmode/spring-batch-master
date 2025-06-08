@@ -1,4 +1,4 @@
-package com.batch.user_processing;
+package com.batch.user_processing.repository;
 
 import com.batch.user_processing.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
