@@ -1,6 +1,7 @@
 package com.batch.user_processing.config;
 
 import com.batch.user_processing.batch.UserItemProcessor;
+import com.batch.user_processing.batch.UserItemWriter;
 import com.batch.user_processing.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -11,6 +12,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
@@ -47,8 +49,14 @@ public class SpringBatchConfig {
 
     @Bean
     public ItemProcessor<User,User> processor(){
-        log.info("Item is processing in processor");
-      return new UserItemProcessor();
+        log.info("Item is processing in processor.");
+        return new UserItemProcessor();
+    }
+
+    @Bean
+    public ItemWriter<User> writerDB(){
+        log.info("Item is writing in database.");
+        return new UserItemWriter();
     }
 
     @JobScope
@@ -81,7 +89,8 @@ public class SpringBatchConfig {
                 .<User,User>chunk(10, platformTransactionManager)
                 .reader(reader())
                 .processor(processor())
-                .writer(writer())
+//                .writer(writer())
+                .writer(writerDB())
                 .build();
     }
 }

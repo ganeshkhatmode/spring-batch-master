@@ -12,7 +12,6 @@ public class UserItemReader implements ItemReader<User> {
 
     @Override
     public User read() throws Exception {
-
-        return null;
+        return new User();
     }
 }
