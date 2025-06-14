@@ -4,6 +4,8 @@ import com.batch.user_processing.batch.UserItemProcessor;
 import com.batch.user_processing.batch.UserItemWriter;
 import com.batch.user_processing.model.User;
 import lombok.extern.slf4j.Slf4j;
+import org.jobrunr.jobs.annotations.Recurring;
+import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -43,6 +45,9 @@ public class SpringBatchConfig {
     private JobRepository jobRepository;
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private JobScheduler jobScheduler;
 
     @JobScope
     @Bean
@@ -106,14 +111,18 @@ public class SpringBatchConfig {
                 .build();
     }
 
-    @Scheduled(cron = "* * 2 * * ?")
+//    @Scheduled(cron = "* * 2 * * ?")
+    @org.jobrunr.jobs.annotations.Job(name = "SprintBatch-Job",retries = 2)
+    @Recurring(id = "SPRING-BATCH-Job", cron = "*/5 * * * *")
     public void runJobTesting() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         Date date = new Date();
         log.info("Scheduler job run time : {}",date.toString());
         JobExecution jobExecution = jobLauncher.run(job(jobRepository, step(jobRepository,transactionManager), transactionManager),new JobParametersBuilder().addDate("launchDate", date).toJobParameters());
         log.info("Batch job ends with status as {}", jobExecution.getStatus());
     }
-    @Scheduled(cron = "1 * * * * ?")
+
+    @org.jobrunr.jobs.annotations.Job(name = "Sample-Job",retries = 2)
+    @Recurring(id = "Sample-Job", cron = "*/3 * * * *")
     public void cronJobRun(){
         log.info("Scheduled cron job every 1 minute : {} ", new Date());
         log.info("Scheduled cron job end {} ", new Date());
