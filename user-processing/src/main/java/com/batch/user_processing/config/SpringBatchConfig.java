@@ -4,12 +4,15 @@ import com.batch.user_processing.batch.UserItemProcessor;
 import com.batch.user_processing.batch.UserItemWriter;
 import com.batch.user_processing.model.User;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
@@ -20,17 +23,26 @@ import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.util.Date;
 
 @Configuration
 @Slf4j
 public class SpringBatchConfig {
 
-
+    @Autowired
+    private JobLauncher jobLauncher;
+    @Autowired
+    private JobRepository jobRepository;
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @JobScope
     @Bean
@@ -76,7 +88,7 @@ public class SpringBatchConfig {
     }
 
     @Bean
-    public Job job(JobRepository jobRepository, Step step){
+    public Job job(JobRepository jobRepository, Step step, PlatformTransactionManager transactionManager){
         return new JobBuilder("csv-job", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .start(step)
@@ -92,5 +104,18 @@ public class SpringBatchConfig {
 //                .writer(writer())
                 .writer(writerDB())
                 .build();
+    }
+
+    @Scheduled(cron = "* * 2 * * ?")
+    public void runJobTesting() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+        Date date = new Date();
+        log.info("Scheduler job run time : {}",date.toString());
+        JobExecution jobExecution = jobLauncher.run(job(jobRepository, step(jobRepository,transactionManager), transactionManager),new JobParametersBuilder().addDate("launchDate", date).toJobParameters());
+        log.info("Batch job ends with status as {}", jobExecution.getStatus());
+    }
+    @Scheduled(cron = "1 * * * * ?")
+    public void cronJobRun(){
+        log.info("Scheduled cron job every 1 minute : {} ", new Date());
+        log.info("Scheduled cron job end {} ", new Date());
     }
 }

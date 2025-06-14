@@ -1,7 +1,9 @@
 spring:
   batch:
+    job:
+      enabled: false
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
   jpa:
     hibernate:
       ddl-auto: update
